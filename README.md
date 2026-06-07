@@ -58,8 +58,8 @@ The secret: Claude reads the WOD like a coach, figures out the vibe and duration
 ### 1. Clone and set up Python
 
 ```bash
-git clone https://github.com/your-username/wod2beats.git
-cd wod2beats
+git clone https://github.com/vkhod/wod2beats.git /opt/wod2beats
+cd /opt/wod2beats
 python -m venv .venv
 # macOS/Linux:
 source .venv/bin/activate
@@ -126,8 +126,8 @@ print(r.json()["core_playlist"]["url"])
 
 ```bash
 # on the server
-git clone https://github.com/your-username/wod2beats.git /opt/wod2beats
-cp .env.example /opt/wod2beats/.env   # fill in real values
+git clone https://github.com/vkhod/wod2beats.git /opt/wod2beats
+cp /opt/wod2beats/.env.example /opt/wod2beats/.env   # fill in real values
 # edit Caddyfile → replace your-domain.com
 docker compose up -d
 ```
