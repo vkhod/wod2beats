@@ -1,0 +1,14 @@
+services:
+  api:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "8232:8000"
+    volumes:
+      - db_data:/data
+    environment:
+      DB_PATH: /data/wod2beats.db
+
+volumes:
+  db_data:
