@@ -5,3 +5,6 @@ tests/
 __pycache__/
 *.pyc
 *.db
+frontend/node_modules/
+frontend/dist/
+frontend/.env.local

@@ -10,5 +10,16 @@ services:
     environment:
       DB_PATH: /data/wod2beats.db
 
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8232}
+        VITE_APP_USER: ${VITE_APP_USER}
+        VITE_APP_PASSWORD: ${VITE_APP_PASSWORD}
+    restart: unless-stopped
+    ports:
+      - "8231:80"
+
 volumes:
   db_data:

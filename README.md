@@ -49,6 +49,7 @@ The secret: Claude reads the WOD like a coach, figures out the vibe and duration
 | Resolver | YouTube Data API v3 |
 | Auth | AWS Cognito + Google federation (optional — bypassable for local dev) |
 | State | SQLite (anti-repeat history + prefs) |
+| Frontend | React + Vite + TypeScript + Tailwind CSS · mobile-first, dark theme |
 | Deploy | Docker + Caddy (auto-TLS) on a Hetzner VPS |
 
 ---
@@ -120,6 +121,24 @@ print(r.json()["buildup_playlist"]["url"])
 print(r.json()["core_playlist"]["url"])
 ```
 
+### 7. Run the frontend (local dev)
+
+```bash
+cd frontend
+cp .env.local.example .env.local   # or create manually — see below
+npm install
+npm run dev
+```
+
+Create `frontend/.env.local`:
+```
+VITE_API_BASE_URL=http://localhost:8000
+VITE_APP_USER=gym
+VITE_APP_PASSWORD=changeme
+```
+
+Opens at `http://localhost:5173`. Photo tab is the default — tap to photograph or drag a WOD screenshot.
+
 ---
 
 ## Deploy (Docker + Caddy)
@@ -131,6 +150,16 @@ cp /opt/wod2beats/.env.example /opt/wod2beats/.env   # fill in real values
 # edit Caddyfile → replace your-domain.com
 docker compose up -d
 ```
+
+The compose file starts two containers:
+
+| Service | Port | What |
+|---|---|---|
+| `api` | 8232 | FastAPI backend |
+| `frontend` | 8231 | React app (nginx) |
+
+Add `VITE_API_BASE_URL`, `VITE_APP_USER`, and `VITE_APP_PASSWORD` to `.env` alongside the other
+secrets — the frontend build args pick them up automatically.
 
 CI/CD is wired via GitHub Actions (`.github/workflows/deploy.yml`): push to `main` → SSH deploy → `docker compose up -d --build`. Add `HETZNER_HOST`, `HETZNER_USER`, and `HETZNER_SSH_KEY` to your repo's Actions secrets.
 
@@ -147,10 +176,11 @@ CI/CD is wired via GitHub Actions (`.github/workflows/deploy.yml`): push to `mai
 - [x] Curator → resolver → public playlists, local
 - [x] Screenshot / image input (Claude vision)
 - [x] Anti-repeat 14-day rolling log
-- [x] Docker + CI/CD
+- [x] Docker + CI/CD (backend live on Hetzner at port 8232)
+- [x] React mobile frontend — photo-first, login gate, playlist result cards (port 8231)
 - [ ] Caddy + auto-TLS on Hetzner (waiting on domain)
-- [ ] React mobile frontend against `/api/generate`
 - [ ] Resolution cache (cut quota cost)
+- [ ] AWS Cognito login (currently bypassed)
 - [ ] Per-user YouTube accounts (each friend publishes to their own channel)
 
 ---
