@@ -22,7 +22,15 @@ export interface Track {
   youtube_url?: string | null
 }
 
+export interface Segment {
+  name: string
+  minutes: number
+  intensity: 'low' | 'med' | 'high'
+}
+
 export interface CurationResult {
+  session: Segment[]
+  core_name: string
   core_min: number
   core_note?: string
   buildup: Track[]
