@@ -4,7 +4,7 @@ import WodInput from './components/WodInput'
 import PlaylistCard from './components/PlaylistCard'
 import Spinner from './components/Spinner'
 import { generate } from './api'
-import type { GenerateRequest, GenerateResponse } from './api'
+import type { GenerateRequest, GenerateResponse, Segment } from './api'
 
 function isAuthed() {
   return localStorage.getItem('wod2beats_authed') === '1'
@@ -82,10 +82,25 @@ export default function App() {
 
             <div className="space-y-4">
               {result.buildup_playlist && (
-                <PlaylistCard playlist={result.buildup_playlist} type="buildup" />
+                <PlaylistCard
+                  playlist={result.buildup_playlist}
+                  type="buildup"
+                  segments={result.curation.session.filter(s => s.name !== result.curation.core_name)}
+                />
               )}
               {result.core_playlist && (
-                <PlaylistCard playlist={result.core_playlist} type="core" />
+                <PlaylistCard
+                  playlist={result.core_playlist}
+                  type="core"
+                  segments={(() => {
+                    const match = result.curation.session.filter(s => s.name === result.curation.core_name)
+                    return match.length > 0
+                      ? match
+                      : [{ name: result.curation.core_name, minutes: result.curation.core_min, intensity: 'high' as const } satisfies Segment]
+                  })()}
+                  coreName={result.curation.core_name}
+                  coreNote={result.curation.core_note}
+                />
               )}
             </div>
 
