@@ -51,12 +51,19 @@ def generate(req: GenerateRequest, user: dict = Depends(require_user)):
     pl_name = f"WOD2Beats-{stamp}"
     target = req.core_target_min or curation.core_min
 
+    # Cap build-up to the scheduled pre-Core duration so it doesn't overrun into the metcon.
+    core_name_lower = curation.core_name.lower()
+    buildup_target = sum(
+        s.minutes for s in curation.session if s.name.lower() != core_name_lower
+    ) or None  # None means no cap (fallback if session parsing produced nothing)
+
     url, all_tracks, core_idx, filler_idx = youtube.build_combined_playlist(
         pl_name,
         curation.buildup,
         curation.core,
         curation.filler,
         core_min=target,
+        buildup_target_min=buildup_target,
     )
 
     # Partition resolved tracks back into the curation sections
@@ -67,7 +74,10 @@ def generate(req: GenerateRequest, user: dict = Depends(require_user)):
     add_used([f"{t.artist} — {t.title}" for t in all_tracks])
 
     skill_end = all_tracks[core_idx - 1] if core_idx > 0 else None
-    wod_start = all_tracks[core_idx] if core_idx < len(all_tracks) else None
+    # Only set WOD anchor if at least one core track resolved (filler_idx > core_idx).
+    # If all core songs failed, core_idx == filler_idx and the first filler track must
+    # not be labelled "BEGIN MAIN WOD".
+    wod_start = all_tracks[core_idx] if filler_idx > core_idx else None
     has_filler = len(all_tracks) > filler_idx
     filler_warning = "" if has_filler else "Tight schedule — no buffer time after the metcon"
 

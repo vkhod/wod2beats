@@ -117,8 +117,7 @@ import base64, httpx
 
 img = base64.b64encode(open("wod.png", "rb").read()).decode()
 r = httpx.post("http://localhost:8000/api/generate", json={"wod_image_b64": img})
-print(r.json()["buildup_playlist"]["url"])
-print(r.json()["core_playlist"]["url"])
+print(r.json()["playlist"]["url"])
 ```
 
 ### 7. Run the frontend (local dev)

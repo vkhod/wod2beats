@@ -33,7 +33,7 @@ def _prompt(req, avoid: list[str]) -> str:
 JOB 1 — Parse the session into ordered segments. For each: name, estimated duration in minutes, intensity (low/med/high). Find the conditioning piece (often labelled "Engine", "Metcon", "WOD", AMRAP, EMOM, RFT, "For Time") — that is the CORE. Estimate the CORE's duration: use explicit caps/round counts where given; for an uncapped "For Time" piece, estimate a typical class athlete's time and say it's an estimate.
 
 JOB 2 — Curate THREE playlists of REAL, well-known songs that exist on YouTube (exact artist + title; avoid obscure tracks that may not exist). The class runs 60 min total; aim to fill to ~55 min (5 min buffer before time cap):
-- BUILD-UP: soundtrack for the strength/skill/warm-up blocks. Groove, steady, in-the-pocket. ~6 tracks.
+- BUILD-UP: soundtrack for the strength/skill/warm-up blocks. Groove, steady, in-the-pocket. Use the session you just parsed to estimate how long the pre-Core blocks last, then propose enough tracks to fill that duration (not a fixed count — time-match the schedule).
 - CORE: track durations should SUM to roughly the CORE duration (slightly over is good). High energy, driving, push-forward. ~5-7 tracks.
 - FILLER: after the main WOD, fill remaining class time to reach 55 min total (55 minus estimated build-up minutes minus CORE minutes). Recovery/cool-down energy, same genre lean but lower intensity. If (build-up + CORE) already exceeds 55 min, return an empty fillerList.
 
