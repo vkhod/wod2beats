@@ -33,6 +33,13 @@ class CurationResult(BaseModel):
     core_note: str = ""
     buildup: list[Track]
     core: list[Track]
+    filler: list[Track] = []
+
+
+class AnchorInfo(BaseModel):
+    skill_end_song: Track | None = None   # last build-up track → skill block wrapping up
+    wod_start_song: Track | None = None   # first core track → begin main WOD
+    filler_warning: str = ""              # non-empty when no buffer time remains after metcon
 
 
 class PlaylistOut(BaseModel):
@@ -43,5 +50,7 @@ class PlaylistOut(BaseModel):
 
 class GenerateResponse(BaseModel):
     curation: CurationResult
-    buildup_playlist: PlaylistOut | None = None
-    core_playlist: PlaylistOut | None = None
+    playlist: PlaylistOut | None = None
+    core_start_index: int = 0
+    filler_start_index: int = 0
+    anchors: AnchorInfo = AnchorInfo()

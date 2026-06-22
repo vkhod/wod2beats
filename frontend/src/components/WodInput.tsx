@@ -137,7 +137,7 @@ export default function WodInput({ onSubmit, loading }: Props) {
         disabled={!canSubmit}
         className="w-full py-4 rounded-xl bg-orange-500 hover:bg-orange-400 active:bg-orange-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-base transition-colors"
       >
-        Generate Playlists
+        Generate Playlist
       </button>
     </div>
   )
