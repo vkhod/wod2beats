@@ -32,9 +32,10 @@ def _prompt(req, avoid: list[str]) -> str:
 
 JOB 1 — Parse the session into ordered segments. For each: name, estimated duration in minutes, intensity (low/med/high). Find the conditioning piece (often labelled "Engine", "Metcon", "WOD", AMRAP, EMOM, RFT, "For Time") — that is the CORE. Estimate the CORE's duration: use explicit caps/round counts where given; for an uncapped "For Time" piece, estimate a typical class athlete's time and say it's an estimate.
 
-JOB 2 — Curate TWO playlists of REAL, well-known songs that exist on YouTube (exact artist + title; avoid obscure tracks that may not exist):
+JOB 2 — Curate THREE playlists of REAL, well-known songs that exist on YouTube (exact artist + title; avoid obscure tracks that may not exist). The class runs 60 min total; aim to fill to ~55 min (5 min buffer before time cap):
 - BUILD-UP: soundtrack for the strength/skill/warm-up blocks. Groove, steady, in-the-pocket. ~6 tracks.
 - CORE: track durations should SUM to roughly the CORE duration (slightly over is good). High energy, driving, push-forward. ~5-7 tracks.
+- FILLER: after the main WOD, fill remaining class time to reach 55 min total (55 minus estimated build-up minutes minus CORE minutes). Recovery/cool-down energy, same genre lean but lower intensity. If (build-up + CORE) already exceeds 55 min, return an empty fillerList.
 
 Style controls:
 - Genre lean: {req.genre}.
@@ -44,7 +45,7 @@ WORKOUT:
 {wod}
 
 Output ONLY minified JSON, this exact schema:
-{{"session":[{{"name":"","min":0,"intensity":"low|med|high"}}],"core":{{"name":"","min":0,"note":""}},"buildup":[{{"t":"","a":"","why":"","min":0}}],"coreList":[{{"t":"","a":"","why":"","min":0}}]}}
+{{"session":[{{"name":"","min":0,"intensity":"low|med|high"}}],"core":{{"name":"","min":0,"note":""}},"buildup":[{{"t":"","a":"","why":"","min":0}}],"coreList":[{{"t":"","a":"","why":"","min":0}}],"fillerList":[{{"t":"","a":"","why":"","min":0}}]}}
 Keep every "why" to 6 words max. "min" are numbers (decimals ok)."""
 
 
@@ -75,6 +76,12 @@ def curate(req) -> CurationResult:
     a, b = raw.find("{"), raw.rfind("}")
     data = json.loads(raw[a:b + 1])
 
+    def _tracks(key: str) -> list[Track]:
+        return [
+            Track(title=t["t"], artist=t["a"], why=t.get("why", ""), minutes=t.get("min", 0))
+            for t in data.get(key, [])
+        ]
+
     return CurationResult(
         session=[
             Segment(name=s["name"], minutes=s.get("min", 0), intensity=s.get("intensity", ""))
@@ -83,12 +90,7 @@ def curate(req) -> CurationResult:
         core_name=data["core"]["name"],
         core_min=data["core"].get("min", 0),
         core_note=data["core"].get("note", ""),
-        buildup=[
-            Track(title=t["t"], artist=t["a"], why=t.get("why", ""), minutes=t.get("min", 0))
-            for t in data.get("buildup", [])
-        ],
-        core=[
-            Track(title=t["t"], artist=t["a"], why=t.get("why", ""), minutes=t.get("min", 0))
-            for t in data.get("coreList", [])
-        ],
+        buildup=_tracks("buildup"),
+        core=_tracks("coreList"),
+        filler=_tracks("fillerList"),
     )

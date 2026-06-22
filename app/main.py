@@ -1,8 +1,9 @@
 """WOD2Beats API.
 
-Morning flow: client signs in (Cognito) -> POST /api/generate with the WOD ->
-curator proposes two lists -> YouTube resolves + creates two PUBLIC playlists ->
-links come back. Anti-repeat history is read before curation, written after."""
+Morning flow: client signs in -> POST /api/generate with the WOD ->
+curator proposes three lists (build-up, core, filler) -> YouTube resolves +
+creates one PUBLIC playlist -> link + coach anchors come back.
+Anti-repeat history is read before curation, written after."""
 from contextlib import asynccontextmanager
 from datetime import date
 
@@ -11,7 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .config import settings
 from .db import init_db, add_used
-from .models import GenerateRequest, GenerateResponse, PlaylistOut
+from .models import GenerateRequest, GenerateResponse, PlaylistOut, AnchorInfo
 from .curator import curate
 from . import youtube
 from .auth import require_user
@@ -47,18 +48,37 @@ def generate(req: GenerateRequest, user: dict = Depends(require_user)):
     curation = curate(req)
 
     stamp = date.today().strftime("%Y%m%d")
-    bu_name = f"WOD2Beats-{stamp}-Buildup"
-    core_name = f"WOD2Beats-{stamp}-Core"
-
-    bu_url, bu_tracks = youtube.build_playlist(bu_name, curation.buildup, None)
+    pl_name = f"WOD2Beats-{stamp}"
     target = req.core_target_min or curation.core_min
-    core_url, core_tracks = youtube.build_playlist(core_name, curation.core, target)
 
-    curation.buildup, curation.core = bu_tracks, core_tracks
-    add_used([f"{t.artist} — {t.title}" for t in bu_tracks + core_tracks])
+    url, all_tracks, core_idx, filler_idx = youtube.build_combined_playlist(
+        pl_name,
+        curation.buildup,
+        curation.core,
+        curation.filler,
+        core_min=target,
+    )
+
+    # Partition resolved tracks back into the curation sections
+    curation.buildup = all_tracks[:core_idx]
+    curation.core = all_tracks[core_idx:filler_idx]
+    curation.filler = all_tracks[filler_idx:]
+
+    add_used([f"{t.artist} — {t.title}" for t in all_tracks])
+
+    skill_end = all_tracks[core_idx - 1] if core_idx > 0 else None
+    wod_start = all_tracks[core_idx] if core_idx < len(all_tracks) else None
+    has_filler = len(all_tracks) > filler_idx
+    filler_warning = "" if has_filler else "Tight schedule — no buffer time after the metcon"
 
     return GenerateResponse(
         curation=curation,
-        buildup_playlist=PlaylistOut(name=bu_name, url=bu_url, track_count=len(bu_tracks)),
-        core_playlist=PlaylistOut(name=core_name, url=core_url, track_count=len(core_tracks)),
+        playlist=PlaylistOut(name=pl_name, url=url, track_count=len(all_tracks)),
+        core_start_index=core_idx,
+        filler_start_index=filler_idx,
+        anchors=AnchorInfo(
+            skill_end_song=skill_end,
+            wod_start_song=wod_start,
+            filler_warning=filler_warning,
+        ),
     )

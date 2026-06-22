@@ -35,12 +35,21 @@ export interface CurationResult {
   core_note?: string
   buildup: Track[]
   core: Track[]
+  filler: Track[]
+}
+
+export interface AnchorInfo {
+  skill_end_song: Track | null
+  wod_start_song: Track | null
+  filler_warning: string
 }
 
 export interface GenerateResponse {
   curation: CurationResult
-  buildup_playlist: PlaylistOut | null
-  core_playlist: PlaylistOut | null
+  playlist: PlaylistOut | null
+  core_start_index: number
+  filler_start_index: number
+  anchors: AnchorInfo
 }
 
 const BASE = import.meta.env.VITE_API_BASE_URL ?? ''
