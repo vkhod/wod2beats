@@ -55,14 +55,36 @@ export interface GenerateResponse {
 const BASE = import.meta.env.VITE_API_BASE_URL ?? ''
 
 export async function generate(req: GenerateRequest): Promise<GenerateResponse> {
-  const res = await fetch(`${BASE}/api/generate`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(req),
-  })
-  if (!res.ok) {
-    const text = await res.text().catch(() => res.statusText)
-    throw new Error(`${res.status}: ${text}`)
+  let res: Response
+  try {
+    res = await fetch(`${BASE}/api/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(req),
+    })
+  } catch {
+    const target = BASE || window.location.origin
+    const reason = navigator.onLine
+      ? 'Server may be down or unreachable.'
+      : 'No network connection.'
+    throw new Error(`Cannot reach the API at ${target} — ${reason}`)
   }
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => '')
+    let detail = body || res.statusText
+    try {
+      const json = JSON.parse(body) as { detail?: unknown }
+      if (typeof json.detail === 'string') {
+        detail = json.detail
+      } else if (Array.isArray(json.detail)) {
+        detail = (json.detail as Array<{ msg: string }>).map(d => d.msg).join('; ')
+      }
+    } catch {
+      // body is plain text, use as-is
+    }
+    throw new Error(`Server error ${res.status}: ${detail}`)
+  }
+
   return res.json()
 }

@@ -27,6 +27,10 @@ jobs:
             git reset --hard origin/main
             git clean -fd
 
+            # .env must exist before building — containers start without it but
+            # silently drop all API keys, causing runtime failures that look healthy.
+            test -f .env || { echo "ERROR: .env is missing on the server" >&2; exit 1; }
+
             docker compose up -d --build
 
             # docker compose up -d returns as soon as containers are scheduled,
