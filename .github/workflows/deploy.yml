@@ -14,7 +14,31 @@ jobs:
           host: ${{ secrets.HETZNER_HOST }}
           username: ${{ secrets.HETZNER_USER }}
           key: ${{ secrets.HETZNER_SSH_KEY }}
+          script_stop: true   # fail the action if the remote script exits non-zero
           script: |
+            set -euo pipefail
+
             cd /opt/wod2beats
-            git pull
+
+            # Force the working tree to exactly match origin/main.
+            # Using reset --hard instead of git pull avoids the "local changes
+            # would be overwritten" abort that previously produced a silent false-green.
+            git fetch origin
+            git reset --hard origin/main
+            git clean -fd
+
+            # .env must exist before building — containers start without it but
+            # silently drop all API keys, causing runtime failures that look healthy.
+            test -f .env || { echo "ERROR: .env is missing on the server" >&2; exit 1; }
+
             docker compose up -d --build
+
+            # docker compose up -d returns as soon as containers are scheduled,
+            # not when they are healthy. Wait, then hit the API health endpoint
+            # so a crash-on-start is caught here rather than silently.
+            sleep 8
+            curl -sf http://localhost:8232/healthz \
+              || { echo "ERROR: backend health check failed after deploy" >&2; exit 1; }
+
+            echo "=== Deploy OK ==="
+            docker compose ps
